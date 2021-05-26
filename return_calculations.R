@@ -1,11 +1,11 @@
 
-change <- function(prices){
+pct_change <- function(prices){
   # change calculates the percentage change in a time series.
   # INPUT    prices ... nx1 ... prices
   #
   # OUTPUT   ..... nx1 ... percentage changes
-  tmp <- (prices / lag(prices) - 1)
-  return(tmp[2:length(tmp)])
+  tmp <-   na.omit(prices / lag.xts(prices) - 1)
+  return(tmp)
 }
 
 
@@ -54,3 +54,74 @@ maxdrawdown <- function(drawdown){
   # OUTPUT ... 1x1 ... Max drawdowns.
   return(min(drawdown))
 }
+
+
+comp <- function(returns){
+  # Calculates total compounded returns
+  # INPUT returns ... nx1 ... returns as calculated by the function.
+  # 
+  # OUTPUT ... 1x1 ... Max drawdowns.
+  return((prod(1+returns) - 1))
+}
+
+
+aggregate_returns <- function(df, period = 'daily'){
+  # aggregate the returns over a period. 
+  # INPUT df ... nx1 ... returns as calculated by the function.
+  # INPUT period ... str ... 
+  # INPUT compounded ... bool ... 
+  #
+  # OUTPUT ... nx1 ... returns.
+  
+  if (period == 'weekly'){
+    apply.weekly(df, comp)
+  } else if (period == 'monthly'){
+    return(apply.monthly(df, comp))
+  } else if (period == 'yearly'){
+    return(apply.yearly(df, comp))
+  } else if (period == 'quarterly'){
+    return(apply.quarterly(df, comp))
+  } else {
+    return(df)
+  }
+}
+
+avg_win <- function(returns, period = 'daily'){
+  # How much did we win in the average winning period
+  #
+  # INPUT 
+  # INPUT period ... str ... over which period, daily, monthly, quarterly or yearly.
+  #
+  # OUTPUT ... float ... mean win.
+  
+  agg_ret <- aggregate_returns(returns, period)
+  return(mean(agg_ret[agg_ret > 0]))
+}
+
+avg_loss <- function(returns, period ='daily'){
+  # How much did we loose in the average loosing period
+  #
+  # INPUT 
+  # INPUT period ... str ... over which period, daily, monthly, quarterly or yearly.
+  #
+  # OUTPUT ... float ... mean win.
+  
+  agg_ret <- aggregate_returns(returns, period)
+  return(mean(agg_ret[agg_ret < 0]))
+}
+
+
+###########
+## TESTS ##
+###########
+
+library(tidyquant)
+getSymbols("AAPL", from = '2020-01-01',
+           to = "2021-03-01",warnings = FALSE,
+           auto.assign = TRUE)
+
+chg <- pct_change(AAPL$AAPL.Adjusted)
+ret <- returns(chg)
+
+chg$date <- index(chg)
+
