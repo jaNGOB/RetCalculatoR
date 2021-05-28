@@ -1,3 +1,7 @@
+# 
+#
+#
+#
 
 pct_change <- function(prices){
   # change calculates the percentage change in a time series.
@@ -86,6 +90,11 @@ aggregate_returns <- function(df, period = 'daily'){
   }
 }
 
+avg_return <- function(returns, period = 'daily'){
+  ret <- aggregate_returns(returns, period)
+  return(mean(ret[ret!=0]))
+}
+
 avg_win <- function(returns, period = 'daily'){
   # How much did we win in the average winning period
   #
@@ -108,6 +117,60 @@ avg_loss <- function(returns, period ='daily'){
   
   agg_ret <- aggregate_returns(returns, period)
   return(mean(agg_ret[agg_ret < 0]))
+}
+
+sharpe <- function(returns, rf=0, periods=252, annualize=TRUE){
+  res <- mean(returns)/sd(returns)
+  if (annualize){
+    return(res * sqrt(252))
+  } else {
+    return(res)
+  }
+}
+
+sortino <- function(returns, rf=0, periods=252, annualize=TRUE){
+  downside = (sum(returns[returns < 0] ** 2))/ length(returns)
+  res = mean(returns) / sqrt(downside)
+  if (annualize){
+    return(res * sqrt(252))
+  } else {
+    return(res)
+  }
+}
+
+
+adj_sortino <- function(returns, rf=0, periods=252, annualize=TRUE){
+  sort <- sortino(returns, rf, periods, annualize)
+  return(sort/sqrt(2))
+}
+
+
+best <- function(returns, period = 'daily'){
+  ret <- aggregate_returns(returns, period)
+  return(max(ret))
+}
+
+
+worst <- function(returns, period = 'daily'){
+  ret <- aggregate_returns(returns, period)
+  return(min(ret))
+}
+
+
+volatility <- function(returns, period = 'daily', annualize = TRUE){
+  ret <- aggregate_returns(returns, period)
+  if (annualize){
+    return(sd(ret) * sqrt(252))
+  } else {
+    return(sd(ret))
+  }
+}
+
+print_table <- function(returns){
+  print(maxdrawdown(returns))
+  print(sharpe(returns))
+  print(sortino(returns))
+  print(comp(chg))
 }
 
 
