@@ -5,9 +5,9 @@
 
 pct_change <- function(prices){
   # change calculates the percentage change in a time series.
-  # INPUT    prices ... nx1 ... prices
+  # INPUT prices  ... xts ... (nx1) actual returns of the strategy
   #
-  # OUTPUT   ..... nx1 ... percentage changes
+  # OUTPUT        ... xts ... (nx1) percentage changes
   tmp <-   na.omit(prices / lag.xts(prices) - 1)
   return(tmp)
 }
@@ -15,7 +15,7 @@ pct_change <- function(prices){
 
 returns <- function(changes){
   # retruns calculets the return of 1$ using percentage changes.
-  # INPUT    prices ... nx1 ... percentage changes
+  # INPUT    changes ... nx1 ... percentage changes of the strategy
   #
   # OUTPUT   ..... nx1 ... returns from 1
   return(cumprod(1+changes))
@@ -27,25 +27,25 @@ total_return <- function(returns){
   # INPUT returns ... nx1 ... returns as calculated by the function.
   # 
   # OUTPUT ... 1x1 ... total returns.
-  return(as.numeric(returns[length(returns)])-1)
+  return(as.numeric(changes[length(returns)])-1)
 }
 
 
-cagr <- function(returns){
+cagr <- function(changes){
   # return the compound annual growth rate from daily returns.
-  # INPUT returns ... nx1 ... returns as calculated by the function.
+  # INPUT changes ... xts   ... (nx1) pct returns of the strategy
   # 
-  # OUTPUT ... 1x1 ... CAGR.
-  t <- length(returns)
-  return(((as.numeric(returns[t]))/as.numeric(returns[1]))^(1/t*252)-1)
+  # OUTPUT        ... float ... CAGR.
+  t <- length(changes)
+  return(((as.numeric(changes[t]))/as.numeric(changes[1]))^(1/t*252)-1)
 }
 
 
 drawdown <- function(returns){
-  # calculates the drawdowns.
-  # INPUT returns ... nx1 ... returns as calculated by the function.
+  # calculates the drawdowns of the strategy as a xts.
+  # INPUT returns ... xts ... (nx1) returns of the strategy starting by 1.
   # 
-  # OUTPUT ... nx1 ... Drawdowns.
+  # OUTPUT        ... xts ... (nx1) Drawdowns.
   rolling.max <- cummax(returns)
   return(returns/roll_max -1)
 }
@@ -53,29 +53,28 @@ drawdown <- function(returns){
 
 maxdrawdown <- function(drawdown){
   # calculates the max drawdown from drawdowns.
-  # INPUT returns ... nx1 ... returns as calculated by the function.
+  # INPUT drawdown ... xts    ... (nx1) drawdowns of the strategy as calculated by "drawdown"
   # 
-  # OUTPUT ... 1x1 ... Max drawdowns.
+  # OUTPUT         ... float  ... (1x1) Max drawdowns.
   return(min(drawdown))
 }
 
 
-comp <- function(returns){
+comp <- function(changes){
   # Calculates total compounded returns
-  # INPUT returns ... nx1 ... returns as calculated by the function.
+  # INPUT changes ... xts ... (nx1) pct returns of the strategy
   # 
-  # OUTPUT ... 1x1 ... Max drawdowns.
-  return((prod(1+returns) - 1))
+  # OUTPUT        ... float ... overall return.
+  return((prod(1+changes) - 1))
 }
 
 
-aggregate_returns <- function(df, period = 'daily'){
+aggregate_returns <- function(changes, period = 'daily'){
   # aggregate the returns over a period. 
-  # INPUT df ... nx1 ... returns as calculated by the function.
-  # INPUT period ... str ... 
-  # INPUT compounded ... bool ... 
+  # INPUT changes ... xts ... (nx1) pct returns of the strategy
+  # INPUT period  ... str ... over which period, daily, monthly, quarterly or yearly.
   #
-  # OUTPUT ... nx1 ... returns.
+  # OUTPUT        ... xts ... (nx1)returns.
   
   if (period == 'weekly'){
     apply.weekly(df, comp)
@@ -90,37 +89,51 @@ aggregate_returns <- function(df, period = 'daily'){
   }
 }
 
-avg_return <- function(returns, period = 'daily'){
-  ret <- aggregate_returns(returns, period)
+avg_return <- function(changes, period = 'daily'){
+  # How much did we win in the average winning period
+  #
+  # INPUT changes ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period  ... str   ... over which period, daily, monthly, quarterly or yearly.
+  #
+  # OUTPUT        ... float ... average return over chosen period.
+  ret <- aggregate_returns(changes, period)
   return(mean(ret[ret!=0]))
 }
 
-avg_win <- function(returns, period = 'daily'){
+avg_win <- function(changes, period = 'daily'){
   # How much did we win in the average winning period
   #
-  # INPUT 
-  # INPUT period ... str ... over which period, daily, monthly, quarterly or yearly.
+  # INPUT changes ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period  ... str   ... over which period, daily, monthly, quarterly or yearly.
   #
-  # OUTPUT ... float ... mean win.
-  
-  agg_ret <- aggregate_returns(returns, period)
+  # OUTPUT        ... float ... average win per period.
+  agg_ret <- aggregate_returns(changes, period)
   return(mean(agg_ret[agg_ret > 0]))
 }
 
-avg_loss <- function(returns, period ='daily'){
+
+avg_loss <- function(changes, period ='daily'){
   # How much did we loose in the average loosing period
   #
-  # INPUT 
-  # INPUT period ... str ... over which period, daily, monthly, quarterly or yearly.
+  # INPUT changes   ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
   #
-  # OUTPUT ... float ... mean win.
-  
-  agg_ret <- aggregate_returns(returns, period)
+  # OUTPUT          ... float ... average loss per period.
+  agg_ret <- aggregate_returns(changes, period)
   return(mean(agg_ret[agg_ret < 0]))
 }
 
-sharpe <- function(returns, rf=0, periods=252, annualize=TRUE){
-  res <- mean(returns)/sd(returns)
+
+sharpe <- function(changes, rf=0, periods=252, annualize=TRUE){
+  # Sharpe ratio calculation
+  #
+  # INPUT returns   ... xts   ... (nx1) pct returns of the strategy
+  # INPUT rf        ... float ... risk free rate
+  # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
+  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  #
+  # OUTPUT          ... float ... Sharpe ratio of the strategy
+  res <- mean(changes)/sd(changes)
   if (annualize){
     return(res * sqrt(252))
   } else {
@@ -128,9 +141,18 @@ sharpe <- function(returns, rf=0, periods=252, annualize=TRUE){
   }
 }
 
-sortino <- function(returns, rf=0, periods=252, annualize=TRUE){
-  downside = (sum(returns[returns < 0] ** 2))/ length(returns)
-  res = mean(returns) / sqrt(downside)
+
+sortino <- function(changes, rf=0, periods=252, annualize=TRUE){
+  # Sortino ratio calculation
+  #
+  # INPUT changes   ... xts   ... (nx1) pct returns of the strategy
+  # INPUT rf        ... float ... risk free rate
+  # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
+  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  #
+  # OUTPUT          ... float ... Sortino ratio of the strategy
+  downside = (sum(changes[changes < 0] ** 2))/ length(changes)
+  res = mean(changes) / sqrt(downside)
   if (annualize){
     return(res * sqrt(252))
   } else {
@@ -139,26 +161,53 @@ sortino <- function(returns, rf=0, periods=252, annualize=TRUE){
 }
 
 
-adj_sortino <- function(returns, rf=0, periods=252, annualize=TRUE){
-  sort <- sortino(returns, rf, periods, annualize)
+adj_sortino <- function(changes, rf=0, periods=252, annualize=TRUE){
+  # Adjust the sortino ratio.
+  #
+  # INPUT changes   ... xts   ... (nx1) pct returns of the strategy
+  # INPUT rf        ... float ... risk free rate
+  # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
+  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  #
+  # OUTPUT          ... float ... Adjusted sortino ratio of the strategy
+  sort <- sortino(changes, rf, periods, annualize)
   return(sort/sqrt(2))
 }
 
 
-best <- function(returns, period = 'daily'){
-  ret <- aggregate_returns(returns, period)
+best <- function(changes, period = 'daily'){
+  # best return over chosen period
+  #
+  # INPUT changes ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period  ... xts   ... (nx1) over which period, daily, monthly, quarterly or yearly. 
+  #
+  # OUTPUT        ... float ... maximum return over chosen period
+  ret <- aggregate_returns(changes, period)
   return(max(ret))
 }
 
 
-worst <- function(returns, period = 'daily'){
-  ret <- aggregate_returns(returns, period)
+worst <- function(changes, period = 'daily'){
+  # worst return over chosen period
+  #
+  # INPUT changes ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period  ... xts   ... (nx1) over which period, daily, monthly, quarterly or yearly. 
+  #
+  # OUTPUT        ... float ... minimum return over chosen period
+  ret <- aggregate_returns(changes, period)
   return(min(ret))
 }
 
 
-volatility <- function(returns, period = 'daily', annualize = TRUE){
-  ret <- aggregate_returns(returns, period)
+volatility <- function(changes, period = 'daily', annualize = TRUE){
+  # volatlity over a defined period of time. 
+  #
+  # INPUT changes     ... xts   ... (nx1) pct returns of the strategy
+  # INPUT period      ... xts   ... (nx1) over which period, daily, monthly, quarterly or yearly. 
+  # INPUT annualize   ... bool  ... if volatility should be annualized or not
+  #
+  # OUTPUT            ... float ... volatility of the strategy
+  ret <- aggregate_returns(changes, period)
   if (annualize){
     return(sd(ret) * sqrt(252))
   } else {
