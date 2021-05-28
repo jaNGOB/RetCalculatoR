@@ -3,6 +3,8 @@
 #
 #
 
+library(formattable)
+
 pct_change <- function(prices){
   # change calculates the percentage change in a time series.
   # INPUT prices  ... xts ... (nx1) actual returns of the strategy
@@ -46,7 +48,7 @@ drawdown <- function(returns){
   # INPUT returns ... xts ... (nx1) returns of the strategy starting by 1.
   # 
   # OUTPUT        ... xts ... (nx1) Drawdowns.
-  rolling.max <- cummax(returns)
+  roll_max <- cummax(returns)
   return(returns/roll_max -1)
 }
 
@@ -77,15 +79,15 @@ aggregate_returns <- function(changes, period = 'daily'){
   # OUTPUT        ... xts ... (nx1)returns.
   
   if (period == 'weekly'){
-    apply.weekly(df, comp)
+    apply.weekly(changes, comp)
   } else if (period == 'monthly'){
-    return(apply.monthly(df, comp))
+    return(apply.monthly(changes, comp))
   } else if (period == 'yearly'){
-    return(apply.yearly(df, comp))
+    return(apply.yearly(changes, comp))
   } else if (period == 'quarterly'){
-    return(apply.quarterly(df, comp))
+    return(apply.quarterly(changes, comp))
   } else {
-    return(df)
+    return(changes)
   }
 }
 
@@ -130,7 +132,7 @@ sharpe <- function(changes, rf=0, periods=252, annualize=TRUE){
   # INPUT returns   ... xts   ... (nx1) pct returns of the strategy
   # INPUT rf        ... float ... risk free rate
   # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
-  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  # INPUT annualize ... bool  ... flag if the output should be annualized
   #
   # OUTPUT          ... float ... Sharpe ratio of the strategy
   res <- mean(changes)/sd(changes)
@@ -148,7 +150,7 @@ sortino <- function(changes, rf=0, periods=252, annualize=TRUE){
   # INPUT changes   ... xts   ... (nx1) pct returns of the strategy
   # INPUT rf        ... float ... risk free rate
   # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
-  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  # INPUT annualize ... bool  ... flag if the output should be annualized
   #
   # OUTPUT          ... float ... Sortino ratio of the strategy
   downside = (sum(changes[changes < 0] ** 2))/ length(changes)
@@ -167,7 +169,7 @@ adj_sortino <- function(changes, rf=0, periods=252, annualize=TRUE){
   # INPUT changes   ... xts   ... (nx1) pct returns of the strategy
   # INPUT rf        ... float ... risk free rate
   # INPUT period    ... str   ... over which period, daily, monthly, quarterly or yearly.
-  #°INPUT annualize ... bool  ... flag if the output should be annualized
+  # INPUT annualize ... bool  ... flag if the output should be annualized
   #
   # OUTPUT          ... float ... Adjusted sortino ratio of the strategy
   sort <- sortino(changes, rf, periods, annualize)
@@ -215,12 +217,84 @@ volatility <- function(changes, period = 'daily', annualize = TRUE){
   }
 }
 
-print_table <- function(returns){
-  print(maxdrawdown(returns))
-  print(sharpe(returns))
-  print(sortino(returns))
-  print(comp(chg))
+yearly_return <- function(chg){
+  years <- unique(year(as.Date(index(chg))))
+  yearly_ret <- c(0)
+  for (y in years){
+    tmp <- returns(chg[as.character(y)])-1
+    yearly_ret <- c(yearly_ret, as.numeric(tmp[length(tmp)]))
+  }
+  yearly_ret <- yearly_ret[2:(length(years)+1)]
+  
+  y_df <- data.frame(years, yearly_ret, mean(yearly_ret))
+  
+  ggplot(data=y_df, aes(x=years, y=yearly_ret)) +
+    geom_bar(stat="identity") + 
+    geom_line(aes(x = years, y = mean.yearly_ret.), color='red', linetype = "dashed") +
+    labs(y = "Return in percent", x = "Year", title = "Yearly return") +
+    scale_y_continuous(labels=scales::percent)
 }
+
+ret_dd_plot <- function(ret){
+  dd <- drawdown(ret)
+
+  comb <- data.frame((ret-1), dd)
+  colnames(comb) <- c("returns", "drawdowns")
+  comb['date'] <- as.Date(row.names(comb))
+  colors <- c("Drawdowns" = "steelblue", "Returns" = "orange")
+  
+  ggplot(comb, aes(x=date)) + 
+    geom_area(aes(y = drawdowns, color = "Drawdowns"), fill = "steelblue", size = 1, alpha = 0.4) +
+    geom_line(aes(y = returns, color = "Returns"), size = 1) +
+    labs(y = "Change in percentage", x = "Date", title = "Strategy Return and Drawdown") +
+    scale_color_manual(values = colors) + 
+    theme(legend.title=element_blank()) +
+    scale_y_continuous(labels=scales::percent)
+}
+
+create_table <- function(chg, ret){
+  
+  fun <- c("Total Returns", "CAGR", "Max. Drawdown", "Sharpe Ratio", "Sortino Ratio", 
+           "Adj. Sortino Ratio", "Best month", "Worst month")
+  res <- c(as.numeric(ret[length(ret)]), cagr(ret), maxdrawdown(ret), sharpe(chg), 
+           sortino(chg), adj_sortino(chg), best(chg, "monthly"), worst(chg, "monthly"))
+  
+  tab <- data.frame(fun, res)
+  colnames(tab) <- c("Metric", "Result")
+  
+  
+  formattable(tab, 
+              align =c("l","c","c","c","c", "c", "c", "c", "r"), 
+              list(`Indicator Name` = formatter(
+                "span", style = ~ style(color = "grey",font.weight = "bold")) 
+              ))
+}
+
+my_markdown_rederer <- function(text) {
+  rmd_file_name <- "temp.Rmd"
+  
+  content <- paste0("\n", text)
+  
+  write(content, rmd_file_name)
+  
+  rmarkdown::render(rmd_file_name)
+  utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
+}
+
+text <- "
+```{r, echo=FALSE}
+ret_dd_plot(ret)
+create_table(chg, ret)
+yearly_return(chg)
+  
+```{r, echo=TRUE}
+# Package Nr1
+# Huge Package
+# Biggest package i have seen!
+"
+
+my_markdown_rederer(text)
+
 
 
 ###########
@@ -228,12 +302,27 @@ print_table <- function(returns){
 ###########
 
 library(tidyquant)
-getSymbols("AAPL", from = '2020-01-01',
+getSymbols("AAPL", from = '2005-01-01',
            to = "2021-03-01",warnings = FALSE,
            auto.assign = TRUE)
 
 chg <- pct_change(AAPL$AAPL.Adjusted)
 ret <- returns(chg)
 
-chg$date <- index(chg)
+chg$date <- as.Date(index(chg))
+
+
+yearly_return(chg)
+
+dd <- drawdown(ret)
+ret_dd_plot(ret)
+
+AAPL$AAPL.lma <- rollapply(AAPL$AAPL.Adjusted, 200, mean)
+AAPL$AAPL.sma <- rollapply(AAPL$AAPL.Adjusted, 20, mean)
+AAPL$POSITION <- ifelse(AAPL$AAPL.lma>AAPL$AAPL.sma, -1, 1)
+AAPL$RETURNS <- pct_change(AAPL$AAPL.Adjusted)
+chg <- na.omit(AAPL$RETURNS * AAPL$POSITION)
+ret <- returns(na.omit(PROFIT))
+
+dd <- drawdown(ret)
 
