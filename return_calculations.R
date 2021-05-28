@@ -4,6 +4,10 @@
 #
 
 library(formattable)
+library(gridExtra)
+library(ggplot2)
+library(tidyverse)
+library(cowplot)
 
 pct_change <- function(prices){
   # change calculates the percentage change in a time series.
@@ -241,36 +245,101 @@ ret_dd_plot <- function(ret){
   comb <- data.frame((ret-1), dd)
   colnames(comb) <- c("returns", "drawdowns")
   comb['date'] <- as.Date(row.names(comb))
-  colors <- c("Drawdowns" = "steelblue", "Returns" = "orange")
   
-  ggplot(comb, aes(x=date)) + 
-    geom_area(aes(y = drawdowns, color = "Drawdowns"), fill = "steelblue", size = 1, alpha = 0.4) +
-    geom_line(aes(y = returns, color = "Returns"), size = 1) +
-    labs(y = "Change in percentage", x = "Date", title = "Strategy Return and Drawdown") +
-    scale_color_manual(values = colors) + 
-    theme(legend.title=element_blank()) +
-    scale_y_continuous(labels=scales::percent)
+  out1 <- ggplot(comb, aes(x=date, y = returns)) + 
+    geom_line(color = "orange", size = 1)+
+    labs(y = "Change in percentage", title = "Strategy Return and Drawdown")+
+    scale_y_continuous(labels=scales::percent)+
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(), 
+          legend.position = "none")
+  
+  out2 <- ggplot(comb, aes(x=date, y = drawdowns)) + 
+    geom_area(color = "steelblue", fill = "steelblue", size = 1, alpha = 0.4)+
+    geom_line(color="steelblue", size=0.5) +
+    labs(y = "", x = "Date")+
+    scale_y_continuous(labels=scales::percent)+  
+    theme(legend.position = "none")
+  
+  out <- plot_grid(out1, out2, nrow = 2, align = "v", rel_heights = c(2, 1))
+  return(out)
 }
 
 create_table <- function(chg, ret){
   
   fun <- c("Total Returns", "CAGR", "Max. Drawdown", "Sharpe Ratio", "Sortino Ratio", 
-           "Adj. Sortino Ratio", "Best month", "Worst month")
+           "Adj. Sortino Ratio", "Best month", "Worst month", "Average winning month", "Average losing month")
   res <- c(as.numeric(ret[length(ret)]), cagr(ret), maxdrawdown(ret), sharpe(chg), 
-           sortino(chg), adj_sortino(chg), best(chg, "monthly"), worst(chg, "monthly"))
+           sortino(chg), adj_sortino(chg), best(chg, "monthly"), worst(chg, "monthly"), 
+           avg_win(chg, "monthly"), avg_loss(chg, "monthly"))
   
   tab <- data.frame(fun, res)
   colnames(tab) <- c("Metric", "Result")
-  
-  
-  formattable(tab, 
-              align =c("l","c","c","c","c", "c", "c", "c", "r"), 
-              list(`Indicator Name` = formatter(
-                "span", style = ~ style(color = "grey",font.weight = "bold")) 
-              ))
+  out <- tableGrob(tab, rows = NULL)
+  return(out)
 }
 
-my_markdown_rederer <- function(text) {
+density_plot <- function(chg){
+  colnames(chg) <- "pct_returns"
+  
+  out <- ggplot(chg, aes(x=pct_returns)) +
+    geom_histogram(aes(y=..density..), colour="black", fill="steelblue", binwidth=0.005, alpha=0.6)+
+    geom_density(alpha=0.25, fill="black")+
+    geom_vline(aes(xintercept=mean(pct_returns)), color="orange",
+               linetype="dashed", size=1)+
+    labs(title="Distribution of Daily Returns", x="", y = "Density")+
+    scale_x_continuous(labels=scales::percent)
+  return(out)
+}
+
+create_heatmap <- function(chg){
+  mydata <- data.frame(chg, month(as.Date(index(chg))), year(as.Date(index(chg))))
+  colnames(mydata) <- c("chg", "months", "yearly")
+  
+  myAvgRet <- mydata %>%
+    group_by(yearly, months) %>%
+    summarise(AVGreturns = comp(chg))
+  
+  myAvgRet.mat <- myAvgRet %>%
+    spread(key = months, value = AVGreturns) %>%
+    as.data.frame %>%
+    column_to_rownames(var = "yearly") %>%
+    as.matrix
+  
+  out <- ggplot(myAvgRet, aes(x = months, yearly)) +
+    geom_tile(aes(fill = AVGreturns)) +
+    geom_text(aes(label = scales::percent(round(AVGreturns, 2))), size=3)+
+    scale_x_continuous("Month", labels = as.character(months), breaks = months)+
+    scale_y_continuous("Year", labels = as.character(yearly), breaks = yearly) + 
+    scale_fill_gradient(low = "red", high = "green")
+  return(out)
+}
+
+generate_report <- function(chg){
+  ret <- returns(chg)
+  text <- "
+  ---
+  title: 'Strategy Report'
+  output: 
+    html_document
+  fontsize: 12pt
+  ---
+  
+  ```{r, fig.width=8, fig.height=4, echo=FALSE}
+  ret_dd_plot(ret)
+  yret <- yearly_return(chg)
+  tab <- create_table(chg, ret)
+  den <- density_plot(chg)
+  grid.arrange(
+    grobs = list(yret, tab, den),
+    layout_matrix = rbind(c(1, 2),
+                          c(3, 2))
+  )
+  create_heatmap(chg)
+  ```{r, echo=TRUE}
+  # Thank you <3
+  "
   rmd_file_name <- "temp.Rmd"
   
   content <- paste0("\n", text)
@@ -278,51 +347,5 @@ my_markdown_rederer <- function(text) {
   write(content, rmd_file_name)
   
   rmarkdown::render(rmd_file_name)
-  utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
+  #utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
 }
-
-text <- "
-```{r, echo=FALSE}
-ret_dd_plot(ret)
-create_table(chg, ret)
-yearly_return(chg)
-  
-```{r, echo=TRUE}
-# Package Nr1
-# Huge Package
-# Biggest package i have seen!
-"
-
-my_markdown_rederer(text)
-
-
-
-###########
-## TESTS ##
-###########
-
-library(tidyquant)
-getSymbols("AAPL", from = '2005-01-01',
-           to = "2021-03-01",warnings = FALSE,
-           auto.assign = TRUE)
-
-chg <- pct_change(AAPL$AAPL.Adjusted)
-ret <- returns(chg)
-
-chg$date <- as.Date(index(chg))
-
-
-yearly_return(chg)
-
-dd <- drawdown(ret)
-ret_dd_plot(ret)
-
-AAPL$AAPL.lma <- rollapply(AAPL$AAPL.Adjusted, 200, mean)
-AAPL$AAPL.sma <- rollapply(AAPL$AAPL.Adjusted, 20, mean)
-AAPL$POSITION <- ifelse(AAPL$AAPL.lma>AAPL$AAPL.sma, -1, 1)
-AAPL$RETURNS <- pct_change(AAPL$AAPL.Adjusted)
-chg <- na.omit(AAPL$RETURNS * AAPL$POSITION)
-ret <- returns(na.omit(PROFIT))
-
-dd <- drawdown(ret)
-
