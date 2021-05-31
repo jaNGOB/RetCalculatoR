@@ -5,3 +5,6 @@ export("adj_sortino", "aggregate_returns", "avg_loss",
        "pct_change", "ret_dd_plot", "returns", "sharpe",
        "sortino", "total_return", "volatility", "worst",
        "yearly_return")
+
+
+importFrom(magrittr,"%>%")
