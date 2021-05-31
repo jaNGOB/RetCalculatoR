@@ -1,6 +1,6 @@
 create_heatmap <-
 function(chg){
-  mydata <- data.frame(chg, month(as.Date(index(chg))), year(as.Date(index(chg))))
+  mydata <- data.frame(chg, format(as.Date(index(chg)), "%m"), format(as.Date(index(chg)), "%Y"))
   colnames(mydata) <- c("chg", "date_month", "date_year")
   
   myAvgRet <- mydata %>%
