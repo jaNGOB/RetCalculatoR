@@ -10,7 +10,7 @@ create_heatmap(chg)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{chg}{Percentage changes.
-}
+  }
 }
 \details{Currently no additional details.
 }
@@ -40,9 +40,8 @@ create_heatmap(chg)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (chg) 
-{
-  mydata <- data.frame(chg, month(as.Date(index(chg))), year(as.Date(index(chg))))
+function(chg){
+  mydata <- data.frame(chg, format(as.Date(index(chg)), "%m"), format(as.Date(index(chg)), "%Y"))
   colnames(mydata) <- c("chg", "date_month", "date_year")
   
   myAvgRet <- mydata %>%
@@ -55,7 +54,7 @@ function (chg)
     scale_x_continuous("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
     scale_y_continuous("Year", labels = as.character(myAvgRet$date_year), breaks = myAvgRet$date_year) + 
     scale_fill_gradient(low = "red", high = "green")
-  }
+  return(out)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

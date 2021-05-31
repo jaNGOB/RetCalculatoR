@@ -12,8 +12,8 @@ library(tidyverse)
 dates <- seq(as.Date("2014/09/04"), by = "day", length.out = 1000)
 dates <- dates[!weekdays(dates) %in% c("Samstag", "Sonntag")]
 changes <- rnorm(length(dates))/100
-ret <- xts(returns(changes), order.by = dates)
-chg <- xts(changes, order.by = dates)
+ret <- xts::xts(returns(changes), order.by = dates)
+chg <- xts::xts(changes, order.by = dates)
 
 # Create a simple SMA Crossover strategy
 
@@ -21,8 +21,8 @@ df <- chg
 colnames(df) <- 'change'
 df$price <- ret
 
-df$lma <- rollapply(df$price, 50, mean)
-df$sma <- rollapply(df$price, 20, mean)
+df$lma <- zoo::rollapply(df$price, 50, mean)
+df$sma <- zoo::rollapply(df$price, 20, mean)
 df <- na.omit(df)
 
 df$position <- ifelse(df$lma > df$sma, -1, 1)
@@ -32,46 +32,27 @@ df$strat_return <- df$position * df$change
 
 sharpe(df$strat_return)
 
-ret_dd_plot(returns(df$strat_return), TRUE, df$price)
+ret_dd_plot_2(returns(df$strat_return), TRUE, df$price)
 
 generate_report(df$strat_return)
 
-ret_dd_plot_2 <-
-  function(ret, benchmark = FALSE, benchmark_df = NULL){
-    dd <- drawdown(ret)
+create_heatmap_2(df$strat_return)
+
+create_heatmap_2 <-
+  function(chg){
+    mydata <- data.frame(chg, format(as.Date(zoo::index(chg)), "%m"), format(as.Date(zoo::index(chg)), "%Y"))
+    colnames(mydata) <- c("chg", "date_month", "date_year")
     
-    if (benchmark){
-      comb <- data.frame((ret-1), (benchmark_df-1), dd)
-      colnames(comb) <- c("returns", "benchmark", "drawdowns")
-      comb['date'] <- as.Date(row.names(comb))
-    }else{
-      comb <- data.frame((ret-1), dd)
-      colnames(comb) <- c("returns", "drawdowns")
-      comb['date'] <- as.Date(row.names(comb))
-    }
+    myAvgRet <- mydata %>%
+      group_by(date_year, date_month) %>%
+      summarise(AVGreturns = comp(chg))
     
-    out1 <- ggplot(comb, aes(x=date, y = returns, group = 1)) + 
-      geom_line(color = "orange", size = 1)+
-      labs(y = "Change in percentage", title = "Strategy Return and Drawdown")+
-      scale_y_continuous(labels=scales::percent)+
-      theme(axis.title.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank(), 
-            legend.position = "none")
-    
-    if (benchmark){
-      out1 <- out1 + geom_line(data = comb, aes(x = date, y = benchmark, group = 1), 
-                               color = 'brown', linetype=1)
-    }
-    
-    out2 <- ggplot(comb, aes(x=date, y = drawdowns)) + 
-      geom_area(color = "steelblue", fill = "steelblue", size = 1, alpha = 0.4)+
-      geom_line(color="steelblue", size=0.5) +
-      labs(y = "", x = "Date")+
-      scale_y_continuous(labels=scales::percent)+  
-      theme(legend.position = "none")
-    
-    out <- plot_grid(out1, out2, nrow = 2, align = "v", rel_heights = c(2, 1))
+    out <- ggplot2::ggplot(myAvgRet, aes(x = date_month, date_year)) +
+      geom_tile(aes(fill = AVGreturns)) +
+      geom_text(aes(label = scales::percent(round(AVGreturns, 2))), size=3)+
+      scale_x_discrete("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
+      scale_y_discrete("Year", labels = as.character(myAvgRet$date_year), breaks = myAvgRet$date_year) + 
+      scale_fill_gradient(low = "red", high = "green")
     return(out)
   }
 

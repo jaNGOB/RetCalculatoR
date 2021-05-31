@@ -44,7 +44,19 @@ generate_report(chg)
 function (chg) 
 {
     ret <- returns(chg)
-    text <- "\n  ---\n  title: 'Strategy Report'\n  output: \n    html_document\n  fontsize: 12pt\n  ---\n  \n  ```{r, fig.width=8, fig.height=4, echo=FALSE}\n  ret_dd_plot(ret)\n  yret <- yearly_return(chg)\n  tab <- create_table(chg, ret)\n  den <- density_plot(chg)\n  grid.arrange(\n    grobs = list(yret, tab, den),\n    layout_matrix = rbind(c(1, 2),\n                          c(3, 2))\n  )\n  create_heatmap(chg)\n  ```{r, echo=TRUE}\n  # Thank you <3\n  "
+    text <- "\n  ---
+    \n  title: 'Strategy Report'
+    \n  output: \n    
+    html_document\n  
+    fontsize: 12pt\n  ---\n  \n  
+    ```{r, fig.width=8, fig.height=4, echo=FALSE}\n  
+    ret_dd_plot(ret)\n  yret <- yearly_return(chg)\n  
+    tab <- create_table(chg, ret)\n  den <- density_plot(chg)\n  
+    grid.arrange(\n    grobs = list(yret, tab, den),\n    
+    layout_matrix = rbind(c(1, 2),\n                          
+    c(3, 2))\n  )\n  create_heatmap(chg)\n  
+    ```{r, echo=TRUE}\n  
+    # Thank you <3\n  "
     rmd_file_name <- "temp.Rmd"
     content <- paste0("\n", text)
     write(content, rmd_file_name)
