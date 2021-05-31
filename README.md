@@ -3,7 +3,9 @@
 
 Hello and welcome :)
 
-The functions that are included in this package can be grouped into two categories: (1) functions forfinancial analysis, and (2) functions for plotting graphs and tables. 
+The functions that are included in this package can be grouped into two categories: 
+1. Functions forfinancial analysis, and 
+2. Functions for plotting graphs and tables. 
 
 
 ## Installation
