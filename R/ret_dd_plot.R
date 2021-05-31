@@ -22,7 +22,7 @@ function(ret, benchmark = FALSE, benchmark_df = NULL){
           legend.position = "none")
   
   if (benchmark){
-    out1 <- out1 + geom_line(data = comb, aes(x = date, y = benchmark), 
+    out1 <- out1 + geom_line(data = comb, aes(x = date, y = benchmark, group = 1), 
                              color = 'brown', linetype=1)
   }
   
