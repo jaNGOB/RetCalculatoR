@@ -1,0 +1,7 @@
+export("adj_sortino", "aggregate_returns", "avg_loss",
+       "avg_return", "avg_win", "best", "cagr", "comp",
+       "create_heatmap", "create_table", "density_plot",
+       "drawdown", "generate_report", "maxdrawdown",
+       "pct_change", "ret_dd_plot", "returns", "sharpe",
+       "sortino", "total_return", "volatility", "worst",
+       "yearly_return")

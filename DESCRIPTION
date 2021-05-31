@@ -1,0 +1,9 @@
+Package: RetCalculatoR
+Type: Package
+Title: Functions for computing and plotting portfolio metrics and analytics
+Version: 0.1
+Date: 2021-05-30
+Author: Jan Gobeli & Tuomas Ahonen
+Maintainer: <ahonet@usi.ch>
+Description: This package contains numerous functions to assess portfolio performance. 
+License: GPL-3
