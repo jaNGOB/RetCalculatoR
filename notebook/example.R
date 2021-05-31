@@ -2,9 +2,8 @@ library(RetCalculatoR)
 library(xts)
 library(ggplot2)
 library(cowplot)
-library(formattable)
 library(gridExtra)
-library(tidyverse)
+library(zoo)
 
 
 # Generate random trading data.
@@ -32,27 +31,24 @@ df$strat_return <- df$position * df$change
 
 sharpe(df$strat_return)
 
-ret_dd_plot_2(returns(df$strat_return), TRUE, df$price)
+ret_dd_plot(returns(df$strat_return), TRUE, df$price)
 
 generate_report(df$strat_return)
 
-create_heatmap_2(df$strat_return)
+density_plot_2(df$strat_return)
 
-create_heatmap_2 <-
+
+density_plot_2 <-
   function(chg){
-    mydata <- data.frame(chg, format(as.Date(zoo::index(chg)), "%m"), format(as.Date(zoo::index(chg)), "%Y"))
-    colnames(mydata) <- c("chg", "date_month", "date_year")
+    colnames(chg) <- "pct_returns"
     
-    myAvgRet <- mydata %>%
-      group_by(date_year, date_month) %>%
-      summarise(AVGreturns = comp(chg))
-    
-    out <- ggplot2::ggplot(myAvgRet, aes(x = date_month, date_year)) +
-      geom_tile(aes(fill = AVGreturns)) +
-      geom_text(aes(label = scales::percent(round(AVGreturns, 2))), size=3)+
-      scale_x_discrete("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
-      scale_y_discrete("Year", labels = as.character(myAvgRet$date_year), breaks = myAvgRet$date_year) + 
-      scale_fill_gradient(low = "red", high = "green")
+    out <- ggplot2::ggplot(chg, ggplot2::aes(x=pct_returns)) +
+      ggplot2::geom_histogram(ggplot2::aes(y=..density..), colour="black", fill="steelblue", binwidth=0.005, alpha=0.6)+
+      ggplot2::geom_density(alpha=0.25, fill="black")+
+      ggplot2::geom_vline(ggplot2::aes(xintercept=mean(pct_returns)), color="orange",
+                    linetype="dashed", size=1)+
+      ggplot2::labs(title="Distribution of Daily Returns", x="", y = "Density")+
+      ggplot2::scale_x_continuous(labels=scales::percent)
     return(out)
   }
 

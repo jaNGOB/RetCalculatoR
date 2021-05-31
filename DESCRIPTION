@@ -8,11 +8,10 @@ Maintainer: <ahonet@usi.ch>
 Description: This package contains numerous functions to assess portfolio performance. 
 License: GPL-
 Imports:
-    tidyverse (>= 1.3.1),
     xts (>= 0.12.1),
     ggplot2 (>= 3.3.3),
     cowplot (>= 1.1.1),
-    formattable (>= 0.2.1),
     gridExtra (>= 2.3),
-    magrittr
+    magrittr,
+    zoo
 RoxygenNote: 7.1.1

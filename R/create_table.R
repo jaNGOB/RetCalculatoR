@@ -9,6 +9,6 @@ function(chg, ret){
   
   tab <- data.frame(fun, res)
   colnames(tab) <- c("Metric", "Result")
-  out <- tableGrob(tab, rows = NULL)
+  out <- gridExtra::tableGrob(tab, rows = NULL)
   return(out)
 }
