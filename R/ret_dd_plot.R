@@ -18,13 +18,12 @@ ret_dd_plot <-
       ggplot2::scale_y_continuous(labels=scales::percent)+
       ggplot2::theme(axis.title.x=ggplot2::element_blank(),
                      axis.text.x=ggplot2::element_blank(),
-                     axis.ticks.x=ggplot2::element_blank(), 
-                     legend.position = "none")
+                     axis.ticks.x=ggplot2::element_blank())
     
     if (benchmark){
       out1 <- out1 + 
         ggplot2::geom_line(data = comb, ggplot2::aes(x = date, y = benchmark, group = 1), 
-                           color = 'brown', linetype=1)
+                           color = 'black', size=1, alpha=0.5)
     }
     
     out2 <- ggplot2::ggplot(comb, ggplot2::aes(x=date, y = drawdowns)) + 
