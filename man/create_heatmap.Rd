@@ -2,6 +2,7 @@
 \alias{create_heatmap}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{A function to create a heatmap of metrics.
+}
 \description{Heatmap displaying returns data in a compact and visually appealing manner.
 }
 \usage{
@@ -41,11 +42,11 @@ create_heatmap(chg)
 
 ## The function is currently defined as
 function(chg){
-  mydata <- data.frame(chg, format(as.Date(index(chg)), "%m"), format(as.Date(index(chg)), "%Y"))
+  mydata <- data.frame(chg, format(as.Date(index(chg)), "\%m"), format(as.Date(index(chg)), "\%Y"))
   colnames(mydata) <- c("chg", "date_month", "date_year")
   
-  myAvgRet <- mydata %>%
-    group_by(date_year, date_month) %>%
+  myAvgRet <- mydata \%>\%
+    group_by(date_year, date_month) \%>\%
     summarise(AVGreturns = comp(chg))
   
   out <- ggplot(myAvgRet, aes(x = date_month, date_year)) +
