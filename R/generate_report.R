@@ -1,7 +1,7 @@
 generate_report <-
 function(chg){
-  ret <- returns(chg)
-  text <- "
+    ret <- returns(chg)
+    text <- "
   ---
   title: 'Strategy Report'
   output: 
@@ -14,7 +14,7 @@ function(chg){
   yret <- yearly_return(chg)
   tab <- create_table(chg, ret)
   den <- density_plot(chg)
-  grid.arrange(
+  gridExtra::grid.arrange(
     grobs = list(yret, tab, den),
     layout_matrix = rbind(c(1, 2),
                           c(3, 2))
@@ -23,12 +23,12 @@ function(chg){
   ```{r, echo=TRUE}
   # Thank you <3
   "
-  rmd_file_name <- "temp.Rmd"
-  
-  content <- paste0("\n", text)
-  
-  write(content, rmd_file_name)
-  
-  rmarkdown::render(rmd_file_name)
-  utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
-}
+    rmd_file_name <- "temp.Rmd"
+    
+    content <- paste0("\n", text)
+    
+    write(content, rmd_file_name)
+    
+    rmarkdown::render(rmd_file_name)
+    utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
+  }
