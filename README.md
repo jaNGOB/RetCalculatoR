@@ -12,7 +12,7 @@ The functions that are included in this package can be grouped into two categori
 
 When installing packages in R, you need Devtools. 
 ```
-packages.install('Devtools')
+packages.install("Devtools")
 library(Devtools)
 ```
 Next our package can be installed by 
