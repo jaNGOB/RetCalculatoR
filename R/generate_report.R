@@ -30,5 +30,5 @@ function(chg){
   write(content, rmd_file_name)
   
   rmarkdown::render(rmd_file_name)
-  #utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
+  utils::browseURL(paste0("file://", utils::URLencode(gsub("Rmd$", "html", rmd_file_name))))
 }

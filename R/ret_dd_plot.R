@@ -12,7 +12,7 @@ function(ret, benchmark = FALSE, benchmark_df = NULL){
     comb['date'] <- as.Date(row.names(comb))
   }
   
-  out1 <- ggplot(comb, aes(x=date, y = returns)) + 
+  out1 <- ggplot(comb, aes(x=date, y = returns, group = 1)) + 
     geom_line(color = "orange", size = 1)+
     labs(y = "Change in percentage", title = "Strategy Return and Drawdown")+
     scale_y_continuous(labels=scales::percent)+
