@@ -1,10 +1,4 @@
 library(RetCalculatoR)
-library(xts)
-library(ggplot2)
-library(cowplot)
-library(gridExtra)
-library(zoo)
-
 
 # Generate random trading data.
 
@@ -31,6 +25,8 @@ df$strat_return <- df$position * df$change
 
 sharpe(df$strat_return)
 
-ret_dd_plot(returns(df$strat_return), TRUE, df$price)
-
 generate_report(df$strat_return)
+
+maxdrawdown(df$strat_return)
+
+sharpe(df$strat_return)
