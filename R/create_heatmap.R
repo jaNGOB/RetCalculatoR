@@ -10,8 +10,8 @@ function(chg){
   out <- ggplot(myAvgRet, aes(x = date_month, date_year)) +
     geom_tile(aes(fill = AVGreturns)) +
     geom_text(aes(label = scales::percent(round(AVGreturns, 2))), size=3)+
-    scale_x_continuous("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
-    scale_y_continuous("Year", labels = as.character(myAvgRet$date_year), breaks = myAvgRet$date_year) + 
+    scale_x_discrete("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
+    scale_y_discrete("Year", labels = as.character(myAvgRet$date_year), breaks = myAvgRet$date_year) + 
     scale_fill_gradient(low = "red", high = "green")
   return(out)
 }
