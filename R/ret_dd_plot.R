@@ -12,7 +12,7 @@ function(ret, benchmark = FALSE, benchmark_df = NULL){
     comb['date'] <- as.Date(row.names(comb))
   }
   
-  out1 <- ggplot(comb, aes(x=date, y = returns, group = 1)) + 
+  out1 <- ggplot2::ggplot(comb, aes(x=date, y = returns, group = 1)) + 
     geom_line(color = "orange", size = 1)+
     labs(y = "Change in percentage", title = "Strategy Return and Drawdown")+
     scale_y_continuous(labels=scales::percent)+
@@ -26,13 +26,13 @@ function(ret, benchmark = FALSE, benchmark_df = NULL){
                              color = 'brown', linetype=1)
   }
   
-  out2 <- ggplot(comb, aes(x=date, y = drawdowns)) + 
+  out2 <- ggplot2::ggplot(comb, aes(x=date, y = drawdowns)) + 
     geom_area(color = "steelblue", fill = "steelblue", size = 1, alpha = 0.4)+
     geom_line(color="steelblue", size=0.5) +
     labs(y = "", x = "Date")+
     scale_y_continuous(labels=scales::percent)+  
     theme(legend.position = "none")
   
-  out <- plot_grid(out1, out2, nrow = 2, align = "v", rel_heights = c(2, 1))
+  out <- cowplot::plot_grid(out1, out2, nrow = 2, align = "v", rel_heights = c(2, 1))
   return(out)
 }

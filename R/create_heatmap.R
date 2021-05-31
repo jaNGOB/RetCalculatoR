@@ -7,7 +7,7 @@ function(chg){
     group_by(date_year, date_month) %>%
     summarise(AVGreturns = comp(chg))
   
-  out <- ggplot(myAvgRet, aes(x = date_month, date_year)) +
+  out <- ggplot2::ggplot(myAvgRet, aes(x = date_month, date_year)) +
     geom_tile(aes(fill = AVGreturns)) +
     geom_text(aes(label = scales::percent(round(AVGreturns, 2))), size=3)+
     scale_x_discrete("Month", labels = as.character(myAvgRet$date_month), breaks = (myAvgRet$date_month))+
