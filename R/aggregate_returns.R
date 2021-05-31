@@ -7,13 +7,13 @@ function(changes, period = 'daily'){
   # OUTPUT        ... xts ... (nx1)returns.
   
   if (period == 'weekly'){
-    apply.weekly(changes, comp)
+    return(xts::apply.weekly(changes, comp))
   } else if (period == 'monthly'){
-    return(apply.monthly(changes, comp))
+    return(xts::apply.monthly(changes, comp))
   } else if (period == 'yearly'){
-    return(apply.yearly(changes, comp))
+    return(xts::apply.yearly(changes, comp))
   } else if (period == 'quarterly'){
-    return(apply.quarterly(changes, comp))
+    return(xts::apply.quarterly(changes, comp))
   } else {
     return(changes)
   }
