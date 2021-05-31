@@ -8,9 +8,9 @@ Maintainer: <ahonet@usi.ch>
 Description: This package contains numerous functions to assess portfolio performance. 
 License: GPL-
 Imports:
+  tidyverse,
   xts,
   ggplot2,
   cowplot,
   formattable,
-  gridExtra,
-  tidyverse
+  gridExtra
