@@ -12,7 +12,7 @@ function(chg){
   
   ggplot2::ggplot(data=y_df, ggplot2::aes(x=years, y=yearly_ret, group = 1)) +
     ggplot2::geom_bar(stat="identity") + 
-    ggplot2::geom_line(ggplot2::aes(x = years, y = mean.yearly_ret., group = 1), size=2, color='red', linetype = "dashed") +
+    ggplot2::geom_line(ggplot2::aes(x = years, y = mean.yearly_ret., group = 1), size=1.5, color='red', linetype = "dashed") +
     ggplot2::labs(y = "Return in percent", x = "Year", title = "Yearly return") +
     ggplot2::scale_y_continuous(labels=scales::percent)
 }
