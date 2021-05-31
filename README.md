@@ -17,4 +17,4 @@ install_github("jaNGOB/RetCalculatoR")
 ```
 And thats it!
 
-Take a look at the examples located in the [notebook folder](https://github.com/jaNGOB/RetCalculatoR/tree/main/notebook). 
+Take a look at the [example](https://github.com/jaNGOB/RetCalculatoR/blob/main/notebook/example.R) located in the notebook folder. 
