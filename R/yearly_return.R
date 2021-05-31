@@ -1,6 +1,6 @@
 yearly_return <-
 function(chg){
-  years <- unique(year(as.Date(index(chg))))
+  years <- unique(format(as.Date(index(chg)), "%Y"))
   yearly_ret <- c(0)
   for (y in years){
     tmp <- returns(chg[as.character(y)])-1
